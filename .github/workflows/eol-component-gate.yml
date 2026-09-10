@@ -1,0 +1,50 @@
+name: End-of-Life Component Gate
+
+# This workflow is designed to be selected by an enterprise or organisation
+# ruleset's "Require workflows to pass before merging" rule, alongside the
+# dependency vulnerability gate.
+on:
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  eol-component-gate:
+    name: Block components that are past end of life
+    if: ${{ true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out target repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Actions track `main`, the same ref the ruleset uses for the workflow
+      # file itself, so the two cannot drift apart. A change here reaches every
+      # gate in the enterprise as soon as it merges; roll one back by reverting
+      # on main, and keep that in mind when reviewing.
+      #
+      # Exceptions live in this repository, not the target one, so a pull
+      # request cannot exempt itself. See
+      # .github/actions/security-policy/exceptions.yml.
+      - name: Render exception policy
+        id: policy
+        uses: catch-oss/shared-workflows/.github/actions/security-policy@main
+        with:
+          repository: ${{ github.repository }}
+          on-expired: fail
+
+      # Fails only where the repository pins itself to a dead release — a
+      # `.nvmrc`, a Docker tag, an exact `engines` pin. An open range such as
+      # `>=18` or `^8.1` could still resolve to something supported, so it is
+      # reported as advisory and left to the scheduled Asana report to chase.
+      - name: Scan for end-of-life components
+        uses: catch-oss/shared-workflows/.github/actions/eol-scan@main
+        with:
+          path: .
+          repository: ${{ github.repository }}
+          warn-days: ${{ vars.SECURITY_EOL_WARN_DAYS || '90' }}
+          ignore-file: ${{ steps.policy.outputs.eol-ignore }}
+          fail-on-eol: true

@@ -1,0 +1,68 @@
+name: Render security exception policy
+description: >-
+  Render the central exception register into a Grype config and an end-of-life
+  ignore list for one target repository, failing when an exception has lapsed.
+
+inputs:
+  repository:
+    description: Target repository in owner/name form.
+    required: true
+  on-expired:
+    description: >-
+      What to do when an exception has lapsed — "fail" (the gates) or "warn"
+      (the scheduled report, which should still raise the finding).
+    required: false
+    default: fail
+  summary:
+    description: Append active exceptions to the job summary.
+    required: false
+    default: "true"
+
+outputs:
+  grype-config:
+    description: Path to the rendered Grype configuration.
+    value: ${{ steps.render.outputs.grype-config }}
+  eol-ignore:
+    description: Path to the rendered end-of-life ignore list.
+    value: ${{ steps.render.outputs.eol-ignore }}
+  exceptions-active:
+    description: Set to the string true when the target repository has unexpired exceptions.
+    value: ${{ steps.render.outputs.exceptions-active }}
+
+runs:
+  using: composite
+  steps:
+    - name: Render exception policy
+      id: render
+      shell: bash
+      env:
+        TARGET_REPOSITORY: ${{ inputs.repository }}
+        ON_EXPIRED: ${{ inputs.on-expired }}
+        WRITE_SUMMARY: ${{ inputs.summary }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        python3 -c 'import yaml' 2>/dev/null \
+          || python3 -m pip install --quiet --disable-pip-version-check 'pyyaml==6.0.2'
+
+        GRYPE_CONFIG="${RUNNER_TEMP}/grype-policy.yaml"
+        EOL_IGNORE="${RUNNER_TEMP}/eol-ignore.json"
+        SUMMARY_ARG=()
+        if [ "${WRITE_SUMMARY}" = "true" ] && [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          SUMMARY_ARG=(--summary-out "${GITHUB_STEP_SUMMARY}")
+        fi
+
+        python3 "${ACTION_PATH}/render_policy.py" \
+          --repository "${TARGET_REPOSITORY}" \
+          --register "${ACTION_PATH}/exceptions.yml" \
+          --grype-out "${GRYPE_CONFIG}" \
+          --eol-out "${EOL_IGNORE}" \
+          --on-expired "${ON_EXPIRED}" \
+          "${SUMMARY_ARG[@]}" | tee "${RUNNER_TEMP}/policy-output.txt"
+
+        {
+          echo "grype-config=${GRYPE_CONFIG}"
+          echo "eol-ignore=${EOL_IGNORE}"
+          grep -m1 '^exceptions-active=' "${RUNNER_TEMP}/policy-output.txt" \
+            || echo "exceptions-active=false"
+        } >> "${GITHUB_OUTPUT}"

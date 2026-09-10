@@ -1,0 +1,72 @@
+name: End-of-life component scan
+description: >-
+  Detect runtime and framework versions declared in a repository and grade them
+  against endoflife.date.
+
+inputs:
+  path:
+    description: Repository root to scan.
+    required: false
+    default: "."
+  repository:
+    description: Target repository in owner/name form, used for reporting.
+    required: false
+    default: ${{ github.repository }}
+  warn-days:
+    description: Warn when a component reaches end of life within this many days.
+    required: false
+    default: "90"
+  ignore-file:
+    description: Path to a rendered end-of-life ignore list.
+    required: false
+    default: ""
+  fail-on-eol:
+    description: >-
+      Fail the step when a component is past end of life and the declaration
+      pins it there. Set to "false" for reporting-only runs.
+    required: false
+    default: "true"
+  json-out:
+    description: Where to write the machine-readable report.
+    required: false
+    default: ""
+  summary:
+    description: Append the findings table to the job summary.
+    required: false
+    default: "true"
+
+outputs:
+  json:
+    description: Path to the JSON report.
+    value: ${{ steps.scan.outputs.json }}
+
+runs:
+  using: composite
+  steps:
+    - name: Scan for end-of-life components
+      id: scan
+      shell: bash
+      env:
+        SCAN_PATH: ${{ inputs.path }}
+        TARGET_REPOSITORY: ${{ inputs.repository }}
+        WARN_DAYS: ${{ inputs.warn-days }}
+        IGNORE_FILE: ${{ inputs.ignore-file }}
+        FAIL_ON_EOL: ${{ inputs.fail-on-eol }}
+        JSON_OUT: ${{ inputs.json-out }}
+        WRITE_SUMMARY: ${{ inputs.summary }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        REPORT="${JSON_OUT:-${RUNNER_TEMP}/eol-report.json}"
+        ARGS=(--path "${SCAN_PATH}" --repository "${TARGET_REPOSITORY}"
+              --warn-days "${WARN_DAYS}" --fail-on-eol "${FAIL_ON_EOL}"
+              --json-out "${REPORT}")
+        if [ -n "${IGNORE_FILE}" ]; then
+          ARGS+=(--ignore-file "${IGNORE_FILE}")
+        fi
+        if [ "${WRITE_SUMMARY}" = "true" ] && [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          ARGS+=(--summary-out "${GITHUB_STEP_SUMMARY}")
+        fi
+
+        echo "json=${REPORT}" >> "${GITHUB_OUTPUT}"
+        python3 "${ACTION_PATH}/eol_scan.py" "${ARGS[@]}"

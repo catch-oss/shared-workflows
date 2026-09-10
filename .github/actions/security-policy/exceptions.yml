@@ -1,0 +1,79 @@
+# Security exception register — PUBLIC repositories only.
+#
+# This file is the public counterpart of the register in
+# catch-internal/shared-workflows. It exists because a required workflow has to
+# live in a repository at least as visible as the one it gates, so public
+# repositories cannot be gated from an internal repository at all.
+#
+# ---------------------------------------------------------------------------
+# The boundary, and it is the whole reason this file is separate
+# ---------------------------------------------------------------------------
+#
+# This repository is PUBLIC. Anything written here is world readable, and an
+# exception is a statement that a named repository is knowingly running a named
+# unpatched vulnerability.
+#
+#   Add entries for PUBLIC repositories only.
+#
+#   Never add an entry for a private or internal repository. That belongs in
+#   catch-internal/shared-workflows, and putting it here would publish a map of
+#   unpatched findings across the private estate.
+#
+# For a public repository the exception is not a disclosure: the code, the
+# dependency tree and the advisory are all public already, and anyone can
+# reproduce the finding by running the scanner themselves. That is what makes
+# it safe to record here and not there.
+#
+# ---------------------------------------------------------------------------
+# Adding an exception
+# ---------------------------------------------------------------------------
+#
+# Exceptions are declared HERE, not in the target repository. Adding one
+# requires a reviewed pull request against catch-oss/shared-workflows, so
+# suppressing a finding is always a deliberate, externally reviewed act by
+# someone other than the author of the change that introduced it.
+#
+#   1. Add the target repository under `repositories:` below.
+#   2. Give every rule a `reason` explaining why it is not actionable —
+#      "no fixed version exists", "not reachable because X", not "noisy".
+#   3. Set `expires` (YYYY-MM-DD, at most six months out). Both gates FAIL once
+#      it lapses, forcing a fresh look rather than silent decay.
+#   4. Scope each rule as tightly as you can. Pin a vulnerability rule to
+#      package name AND version so a dependency bump re-exposes the finding
+#      instead of inheriting the exception; pin an end-of-life rule to the
+#      release cycle so the next major re-exposes it.
+#
+# An empty register is not a gap. The gates render it into an explicit scanner
+# config either way, and passing that config is what stops a target repository
+# supplying its own `.grype.yaml` to weaken the gate from the inside.
+
+version: 1
+
+repositories: {}
+
+# Worked example. A real one would look like this — note that the reason says
+# why it cannot be fixed, and the version is pinned so a bump re-exposes it:
+#
+#  catch-oss/site-audit-seo:
+#    vulnerabilities:
+#      expires: "2026-03-11"
+#      ignore:
+#        # extract-zip 2.0.1 — symlink path traversal, GHSA-jmr9-qjv8-65gv and
+#        # GHSA-7pqw-9j4j-h8q3. No patched version exists: 2.0.1 is the latest
+#        # release. Reached through puppeteer 24, which pins
+#        # @puppeteer/browsers to exactly 2.13.2; the 3.x line dropped the
+#        # dependency, but accessibility-insights-scan, pa11y and lighthouse
+#        # all still require puppeteer 24, so there is nothing to bump to.
+#        - package:
+#            name: extract-zip
+#            version: 2.0.1
+#          reason: >-
+#            No fixed version exists upstream. Clears when the puppeteer 24
+#            consumers move to 25.
+#
+#    end-of-life:
+#      expires: "2026-03-11"
+#      ignore:
+#        - product: node
+#          reason: >-
+#            Example only — remove with the rest of this comment block.

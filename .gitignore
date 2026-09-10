@@ -1,0 +1,6 @@
+.claude/settings.local.json
+__pycache__/
+*.pyc
+.env
+# Any app key, not just the one currently issued.
+*.pem
