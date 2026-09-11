@@ -49,53 +49,31 @@
 
 version: 1
 
-repositories:
+repositories: {}
 
-  # extract-zip 2.0.1 — GHSA-jmr9-qjv8-65gv and GHSA-7pqw-9j4j-h8q3, both
-  # symlink path traversal on archive extraction.
-  #
-  # There is no patched version to move to: 2.0.1 is the latest release and
-  # both advisories record no fix. It is reached through puppeteer 24.43.1,
-  # which pins @puppeteer/browsers to exactly 2.13.2; the 3.x line dropped the
-  # dependency, but accessibility-insights-scan, pa11y and lighthouse all still
-  # require puppeteer 24, so bumping our own packages changes nothing.
-  #
-  # Pinned to name AND version so that when a fix does ship, or the puppeteer
-  # 24 consumers move to 25, the finding re-appears here instead of quietly
-  # inheriting this exception.
-  #
-  # Review trigger: check whether @puppeteer/browsers 3.x has reached
-  # accessibility-insights-scan, pa11y and lighthouse.
-
-  catch-oss/headless-chrome-crawler:
-    vulnerabilities:
-      expires: "2027-02-02"
-      ignore:
-        - package:
-            name: extract-zip
-            version: 2.0.1
-          reason: >-
-            No fixed version exists upstream; 2.0.1 is the latest release.
-            Held by puppeteer 24's exact pin of @puppeteer/browsers 2.13.2.
-
-  catch-oss/site-audit-seo:
-    vulnerabilities:
-      expires: "2027-02-02"
-      ignore:
-        - package:
-            name: extract-zip
-            version: 2.0.1
-          reason: >-
-            No fixed version exists upstream; 2.0.1 is the latest release.
-            Held by puppeteer 24's exact pin of @puppeteer/browsers 2.13.2.
-
-  catch-oss/TheA11yMachine:
-    vulnerabilities:
-      expires: "2027-02-02"
-      ignore:
-        - package:
-            name: extract-zip
-            version: 2.0.1
-          reason: >-
-            No fixed version exists upstream; 2.0.1 is the latest release.
-            Held by puppeteer 24's exact pin of @puppeteer/browsers 2.13.2.
+# Worked example. A real one would look like this — note that the reason says
+# why it cannot be fixed, and the version is pinned so a bump re-exposes it:
+#
+#  catch-oss/site-audit-seo:
+#    vulnerabilities:
+#      expires: "2026-03-11"
+#      ignore:
+#        # extract-zip 2.0.1 — symlink path traversal, GHSA-jmr9-qjv8-65gv and
+#        # GHSA-7pqw-9j4j-h8q3. No patched version exists: 2.0.1 is the latest
+#        # release. Reached through puppeteer 24, which pins
+#        # @puppeteer/browsers to exactly 2.13.2; the 3.x line dropped the
+#        # dependency, but accessibility-insights-scan, pa11y and lighthouse
+#        # all still require puppeteer 24, so there is nothing to bump to.
+#        - package:
+#            name: extract-zip
+#            version: 2.0.1
+#          reason: >-
+#            No fixed version exists upstream. Clears when the puppeteer 24
+#            consumers move to 25.
+#
+#    end-of-life:
+#      expires: "2026-03-11"
+#      ignore:
+#        - product: node
+#          reason: >-
+#            Example only — remove with the rest of this comment block.
