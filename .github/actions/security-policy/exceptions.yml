@@ -80,31 +80,50 @@ repositories:
       ignore:
         - package:
             name: log4j
-            version: 1.2.17
+            version: "1.2.17"
           reason: >-
-            No vnu release drops log4j 1.2.17, and the advisories all require
-            an appender this CLI invocation does not configure.
+            No vnu release drops log4j 1.2.17 - upstream still bundles it as of
+            26.9.7 - and every advisory needs an appender this CLI invocation
+            does not configure.
         - package:
             name: commons-fileupload
-            version: 1.3.1
+            version: "1.3.1"
           reason: >-
-            Fixable only by updating vnu.jar, which raises the Java floor to
-            17+. Pending a decision on the supported Java baseline.
+            Bundled in the vendored vnu.jar. Fixable only by updating that jar,
+            which raises the Java floor to 17+. Pending a decision on the
+            supported Java baseline.
+        - package:
+            name: commons-io
+            version: "2.4"
+          reason: >-
+            Bundled in the vendored vnu.jar. Fixable only by updating that jar,
+            which raises the Java floor to 17+. Pending a decision on the
+            supported Java baseline.
+        - package:
+            name: httpclient
+            version: "4.4"
+          reason: >-
+            Bundled in the vendored vnu.jar. Fixable only by updating that jar,
+            which raises the Java floor to 17+. Pending a decision on the
+            supported Java baseline.
         - package:
             name: jetty-server
-            version: 9.2.9.v20150224
+            version: "9.2.9.v20150224"
           reason: >-
-            Fixable only by updating vnu.jar, which raises the Java floor to
-            17+. Pending a decision on the supported Java baseline.
+            Bundled in the vendored vnu.jar. Fixable only by updating that jar,
+            which raises the Java floor to 17+. Pending a decision on the
+            supported Java baseline.
         - package:
             name: jetty-servlets
-            version: 9.2.9.v20150224
+            version: "9.2.9.v20150224"
           reason: >-
-            Fixable only by updating vnu.jar, which raises the Java floor to
-            17+. Pending a decision on the supported Java baseline.
+            Bundled in the vendored vnu.jar. Fixable only by updating that jar,
+            which raises the Java floor to 17+. Pending a decision on the
+            supported Java baseline.
         - package:
-            name: jetty-util
-            version: 9.2.9.v20150224
+            name: jetty-http
+            version: "9.2.9.v20150224"
           reason: >-
-            Fixable only by updating vnu.jar, which raises the Java floor to
-            17+. Pending a decision on the supported Java baseline.
+            Bundled in the vendored vnu.jar. Fixable only by updating that jar,
+            which raises the Java floor to 17+. Pending a decision on the
+            supported Java baseline.
